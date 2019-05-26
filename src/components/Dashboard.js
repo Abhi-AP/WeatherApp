@@ -1,6 +1,7 @@
 import  React, {
     Component
   } from 'react'
+import ErrorBoundary from './ErrorBoundary'
 class Dashboard extends React.Component
 {
     constructor(props)
@@ -16,14 +17,15 @@ class Dashboard extends React.Component
             region:String,
             country:String,
             condition:String,
-            city:String
+            city:String,
         }
     }
     componentDidMount(){
          fetch('http://api.apixu.com/v1/current.json?key=daef30a4c6e24036853112449190605&q='+this.props.City)
         .then(res=>res.json())
         .then((res)=>{
-                this.setState({
+                this.setState(
+                    {
                     isLoaded : true,
                     temperature:res.current.temp_c,
                     isDay:res.current.is_day,
@@ -41,34 +43,48 @@ class Dashboard extends React.Component
                     error
                 }); 
             }
-            )    
+            ).catch(error=>this.setState({error,isLoaded:false}))    
     }
     render()
     {
+        
+        if(this.props.City==null)
+        {
+            return(
+                <div/>
+            );
+        }
+        else if(this.state.error!=null)
+        {
+            return(
+            <div>
+                <h5>INVALID INPUT</h5>
+            </div>);
+        }
         const {isLoaded,error,temperature,image,isDay,humidity,region,country,condition,city}=this.state;
         let image_dn=null
         if(!isDay){
-            image_dn='https://images.cdn2.stockunlimited.net/preview1300/full-moon-and-stars-background_1519164.jpg'
+            image_dn='https://images.unsplash.com/photo-1553045365-a8f7e11fe233?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=500&q=60'
         }
         else
         {
-            image_dn='https://images.pexels.com/photos/301599/pexels-photo-301599.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940'
+            image_dn='https://cdn.pixabay.com/photo/2013/07/18/20/27/sunrise-165094_960_720.jpg'
         }
-        if(error!=null)
-        {
-            return(<div>Invalid Input</div>);
-        }
+        
         if(!isLoaded){
             return(
-            <div class="align-middle">
-                Loading....
+            <div class="align-middle spinner-border text-light">
             </div>);
         }
         else{
             return(
-                <div style ={ { backgroundImage: "url("+image_dn+")",  height: '100%' } }>
-                    
-                    <img src={image}  height="70" width="70"/>
+                <div>
+                <ErrorBoundary>
+                <div style ={ { backgroundImage: "url("+image_dn+")",
+                backgroundPosition: 'center',
+                backgroundSize: 'cover',
+                backgroundRepeat: 'no-repeat'} }>
+                    <img src={image}  height="75" width="75"/>
                     <kbd>
                     <h3>City:{city}</h3>
                     <h4>State:{region}</h4>
@@ -84,6 +100,8 @@ class Dashboard extends React.Component
                     </dl>
                     </h4>
                     </kbd>
+                </div>
+                </ErrorBoundary>
                 </div>
             );
           }
